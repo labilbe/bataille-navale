@@ -3,7 +3,7 @@
  * lecteurs d'ecran traversent le jeu sans traitement particulier.
  */
 
-import { HIT, MISS, SIZE, index } from '../engine/constants.js';
+import { HIT, MISS, SIZE, index, inside } from '../engine/constants.js';
 import { cellsOf, isSunk } from '../engine/board.js';
 
 const LETTERS = 'ABCDEFGHIJ';
@@ -40,7 +40,11 @@ export function paint(cells, board, { reveal, preview = [], previewValid = true 
     const sunk = isSunk(ship);
     for (const { row, col } of cellsOf(ship)) occupied.set(index(row, col), sunk);
   }
-  const previewSet = new Set(preview.map(({ row, col }) => index(row, col)));
+  // Un navire qui deborde a droite a des cases hors grille : sans ce filtre,
+  // leur index retomberait sur la ligne suivante.
+  const previewSet = new Set(preview
+    .filter(({ row, col }) => inside(row, col))
+    .map(({ row, col }) => index(row, col)));
 
   cells.forEach((cell, i) => {
     const shot = board.shots[i];
