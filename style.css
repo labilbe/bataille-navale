@@ -145,9 +145,15 @@ main {
 }
 .cell.hit.sunk { background: var(--sunk); }
 
+/* Grille verrouillee : ni survol, ni focus, ni clic. */
 .grid.locked { opacity: 0.85; }
-.grid.locked .cell { cursor: default; }
+.grid.locked .cell { cursor: default; pointer-events: none; }
 .cell:disabled { cursor: default; }
+
+.cell:focus-visible, button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
 
 /* --- Flottes ------------------------------------------------------------ */
 
