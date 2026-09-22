@@ -1,0 +1,12 @@
+{
+  "name": "bataille-navale",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bataille navale jouable dans le navigateur, moteur pur en JS vanilla",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve . -l 1986",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

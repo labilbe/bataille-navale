@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bataille navale</title>
+<meta name="description" content="Bataille navale jouable dans le navigateur, en JavaScript vanilla.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Bataille navale</h1>
+  <p id="status" class="status">Placez votre flotte.</p>
+</header>
+
+<main>
+  <section class="board">
+    <h2>Votre flotte</h2>
+    <div class="grid-frame">
+      <div class="ruler-cols"></div>
+      <div class="ruler-rows"></div>
+      <div id="player-grid" class="grid"></div>
+    </div>
+    <ul id="player-fleet" class="fleet"></ul>
+  </section>
+
+  <section class="board">
+    <h2>Eaux ennemies</h2>
+    <div class="grid-frame">
+      <div class="ruler-cols"></div>
+      <div class="ruler-rows"></div>
+      <div id="enemy-grid" class="grid locked"></div>
+    </div>
+    <ul id="enemy-fleet" class="fleet"></ul>
+  </section>
+
+  <aside class="panel">
+    <div id="placement-controls" class="controls">
+      <button type="button" id="rotate">Horizontal (R)</button>
+      <button type="button" id="random">Au hasard</button>
+      <button type="button" id="clear">Tout effacer</button>
+      <button type="button" id="start" class="primary">Lancer la partie</button>
+    </div>
+    <div id="battle-controls" class="controls" hidden>
+      <button type="button" id="replay" class="primary">Nouvelle partie</button>
+    </div>
+    <h2>Journal</h2>
+    <ul id="log" class="log" aria-live="polite"></ul>
+  </aside>
+</main>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
