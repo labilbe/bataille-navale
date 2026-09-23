@@ -1,16 +1,21 @@
 /**
  * Rendu d'une grille en DOM. Les cases sont des boutons : le clavier et les
  * lecteurs d'ecran traversent le jeu sans traitement particulier.
+ *
+ * Les navires ne sont pas peints case par case : chaque navire est une
+ * silhouette posee par-dessus la grille, calee sur les cases qu'il occupe. Les
+ * impacts, eux, restent portes par les cases.
  */
 
-import { HIT, MISS, SIZE, index, inside } from '../engine/constants.js';
+import { HIT, MISS, SIZE, index } from '../engine/constants.js';
 import { cellsOf, isSunk } from '../engine/board.js';
+import { topView } from './silhouettes.js';
 
 const LETTERS = 'ABCDEFGHIJ';
 
 export const coordLabel = (row, col) => `${LETTERS[col]}${row + 1}`;
 
-/** Construit les 100 boutons une fois pour toutes et rend un accesseur. */
+/** Construit les 100 boutons et la couche des silhouettes, une fois pour toutes. */
 export function createGrid(container, onCell) {
   const cells = [];
   for (let row = 0; row < SIZE; row += 1) {
@@ -27,39 +32,62 @@ export function createGrid(container, onCell) {
     }
   }
   container.addEventListener('mouseleave', () => onCell(-1, -1, true));
-  return cells;
+
+  const sprites = document.createElement('div');
+  sprites.className = 'sprites';
+  container.append(sprites);
+
+  return { cells, sprites };
+}
+
+/**
+ * Pose une silhouette sur la grille. Les cases mesurent `--cell`, separees de
+ * `--gap` et decalees de `--pad` : le calcul reste en CSS, donc juste a toutes
+ * les tailles d'ecran.
+ */
+function sprite({ id, size, row, col, dir }, extra = '') {
+  const el = document.createElement('div');
+  el.className = `sprite ${extra}`.trim();
+  const along = `calc(${size} * var(--cell) + ${size - 1} * var(--gap))`;
+  el.style.left = `calc(var(--pad) + ${col} * (var(--cell) + var(--gap)))`;
+  el.style.top = `calc(var(--pad) + ${row} * (var(--cell) + var(--gap)))`;
+  el.style.width = dir === 'H' ? along : 'var(--cell)';
+  el.style.height = dir === 'H' ? 'var(--cell)' : along;
+  el.innerHTML = topView(id, size, dir);
+  return el;
 }
 
 /**
  * Peint une grille. `reveal` montre les navires intacts : vrai pour la flotte
- * du joueur, faux pour celle de l'adversaire tant que la partie dure.
+ * du joueur, faux pour celle de l'adversaire, ou seules les epaves se voient.
+ * `ghost` est le navire en cours de placement, suivi par le pointeur.
  */
-export function paint(cells, board, { reveal, preview = [], previewValid = true }) {
-  const occupied = new Map();
+export function paint({ cells, sprites }, board, { reveal, ghost = null }) {
+  const sunkCells = new Set();
+  sprites.replaceChildren();
+
   for (const ship of board.ships) {
     const sunk = isSunk(ship);
-    for (const { row, col } of cellsOf(ship)) occupied.set(index(row, col), sunk);
+    if (sunk) for (const c of cellsOf(ship)) sunkCells.add(index(c.row, c.col));
+    if (reveal || sunk) sprites.append(sprite(ship, sunk ? 'sunk' : ''));
   }
-  // Un navire qui deborde a droite a des cases hors grille : sans ce filtre,
-  // leur index retomberait sur la ligne suivante.
-  const previewSet = new Set(preview
-    .filter(({ row, col }) => inside(row, col))
-    .map(({ row, col }) => index(row, col)));
+
+  if (ghost) {
+    sprites.append(sprite(ghost, ghost.valid ? 'ghost' : 'ghost ghost-bad'));
+  }
 
   cells.forEach((cell, i) => {
     const shot = board.shots[i];
-    const sunk = occupied.get(i);
     const classes = ['cell'];
-    if (occupied.has(i) && (reveal || sunk)) classes.push(sunk ? 'sunk' : 'ship');
-    if (shot === HIT) classes.push('hit');
+    if (shot === HIT) classes.push(sunkCells.has(i) ? 'hit sunk' : 'hit');
     if (shot === MISS) classes.push('miss');
-    if (previewSet.has(i)) classes.push(previewValid ? 'preview' : 'preview-bad');
     cell.className = classes.join(' ');
     cell.disabled = shot !== null && !reveal;
 
     const row = Math.floor(i / SIZE);
     const col = i % SIZE;
-    const state = shot === HIT ? (sunk ? 'coule' : 'touche') : shot === MISS ? 'a l\'eau' : 'inconnu';
+    const state = shot === HIT ? (sunkCells.has(i) ? 'coule' : 'touche')
+      : shot === MISS ? 'a l\'eau' : 'inconnu';
     cell.setAttribute('aria-label', `${coordLabel(row, col)} : ${state}`);
   });
 }

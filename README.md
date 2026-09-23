@@ -30,6 +30,14 @@ Les navires peuvent se toucher mais pas se chevaucher. **Un tir qui touche donne
 
 Pendant le placement : clic sur votre grille pour poser le navire en attente, **R** pour basculer horizontal/vertical. Les boutons *Au hasard* et *Tout effacer* évitent de tout poser à la main.
 
+## Les navires
+
+Chaque navire est dessiné deux fois, en SVG (`src/view/silhouettes.js`) : **vu de dessus** sur les grilles, **vu de profil** dans la liste des flottes.
+
+Les deux dessins partagent le même repère, long de 100 unités par case occupée et haut de 100, proue à droite ; le placement et la rotation restent à la charge de la vue. Un navire posé n'est donc pas une suite de cases coloriées mais une silhouette unique, calée sur les cases qu'il occupe — le calcul de position se fait en CSS (`--cell`, `--gap`, `--pad`), ce qui la garde juste à toutes les tailles d'écran.
+
+Le pont est plus sombre que la coque : c'est ce contraste qui fait lire le liston comme un bord, et qui laisse ressortir les superstructures, claires. Les impacts sont portés par les cases, pas par la silhouette, et passent par-dessus sans la masquer. Une épave perd ses dégradés : du charbon, plus de la tôle peinte.
+
 ## L'adversaire
 
 L'IA travaille en deux temps (`src/engine/ai.js`) :

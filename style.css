@@ -11,6 +11,8 @@
   --dim: #7b8d9c;
   --gold: #e9b949;
   --cell: clamp(22px, 3.4vw, 34px);
+  --gap: 2px;
+  --pad: 6px;
 }
 
 * { box-sizing: border-box; }
@@ -82,23 +84,25 @@ main {
 .ruler-cols {
   grid-column: 2;
   grid-template-columns: repeat(10, var(--cell));
-  gap: 2px;
+  gap: var(--gap);
   place-items: center;
 }
 
 .ruler-rows {
   grid-row: 2;
   grid-template-rows: repeat(10, var(--cell));
-  gap: 2px;
+  gap: var(--gap);
   place-items: center;
 }
 
 .grid {
   grid-area: 2 / 2;
+  position: relative;
   display: grid;
   grid-template-columns: repeat(10, var(--cell));
-  gap: 2px;
-  padding: 6px;
+  gap: var(--gap);
+  padding: var(--pad);
+  overflow: hidden;
   background: var(--sea);
   border: 1px solid var(--sea-line);
   border-radius: 6px;
@@ -120,16 +124,53 @@ main {
   transform: scale(1.06);
 }
 
-.cell.ship { background: var(--hull); border-color: var(--hull-dark); }
-.cell.sunk { background: var(--sunk); border-color: var(--fire); }
-.cell.preview { background: rgba(159, 179, 194, 0.55); }
-.cell.preview-bad { background: rgba(226, 87, 76, 0.45); }
+/* --- Silhouettes --------------------------------------------------------- */
 
-.cell.miss {
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 0 0 6px transparent;
-  position: relative;
+/* La couche des navires : au-dessus des cases, mais transparente au pointeur,
+   qui doit continuer d'atteindre les boutons. */
+.sprites {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
 }
+
+.sprite {
+  position: absolute;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Les degrades vivent dans un SVG vide pose en tete de page. */
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.art { display: block; width: 100%; height: 100%; }
+
+/* Un filet sombre detache la coque de la mer. */
+.art .hull { fill: url(#nav-hull); stroke: rgba(4, 18, 28, 0.45); stroke-width: 2.5; }
+.art.side .hull { fill: url(#nav-side-hull); }
+.art .deck { fill: url(#nav-deck); }
+.art .tower { fill: url(#nav-tower); stroke: rgba(4, 18, 28, 0.35); stroke-width: 2; }
+.art .mast { fill: #1b2733; }
+.art .mark { fill: rgba(255, 255, 255, 0.8); }
+
+/* Une epave : coque brulee, superstructures eteintes, plus aucun reflet. */
+.sprite.sunk { filter: none; opacity: 0.92; }
+.sunk .art .hull { fill: #6d4b44; }
+.sunk .art .deck { fill: #58332d; }
+.sunk .art .tower { fill: #45241e; }
+.sunk .art .mast { fill: #331a15; }
+.sunk .art .mark { fill: rgba(255, 220, 190, 0.18); stroke: rgba(0, 0, 0, 0.3); }
+
+/* L'apercu du placement suit le pointeur, et rougit s'il ne passe pas. */
+.sprite.ghost { opacity: 0.6; }
+.sprite.ghost-bad .hull { fill: var(--fire); }
+.sprite.ghost-bad .deck { fill: #b8453b; }
+.sprite.ghost-bad .tower { fill: #8c2b23; }
+.sprite.ghost-bad .mast { fill: #6d201a; }
+
+/* Les impacts passent par-dessus les coques, sans les masquer. */
+.cell.miss, .cell.hit { position: relative; z-index: 2; }
+
 .cell.miss::after {
   content: "";
   position: absolute;
@@ -139,11 +180,19 @@ main {
   opacity: 0.5;
 }
 
-.cell.hit {
-  background: var(--fire);
-  border-color: #ff8a7d;
+.cell.hit::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    #ffe6b0 0 16%, var(--fire) 22% 46%, rgba(226, 87, 76, 0.55) 52% 70%, transparent 74%);
 }
-.cell.hit.sunk { background: var(--sunk); }
+.cell.hit.sunk::after {
+  inset: 24%;
+  background: radial-gradient(circle,
+    rgba(32, 10, 8, 0.85) 0 34%, rgba(32, 10, 8, 0.4) 44% 70%, transparent 76%);
+}
 
 /* Grille verrouillee : ni survol, ni focus, ni clic. */
 .grid.locked { opacity: 0.85; }
@@ -157,12 +206,14 @@ main {
 
 /* --- Flottes ------------------------------------------------------------ */
 
+/* Chaque navire est a l'echelle : --len cases de long, --unit de haut. */
 .fleet {
+  --unit: 30px;
   list-style: none;
   margin: 14px 0 0;
   padding: 0;
   display: grid;
-  gap: 5px;
+  gap: 6px;
 }
 
 .fleet-row {
@@ -174,18 +225,36 @@ main {
   letter-spacing: 0.04em;
 }
 
-.fleet-row.absent { opacity: 0.35; }
+.fleet-row.absent { opacity: 0.45; }
 .fleet-row.sunk .fleet-name { color: var(--fire); text-decoration: line-through; }
 
-.pips { display: flex; gap: 3px; }
+.silhouette {
+  position: relative;
+  flex: none;
+  width: calc(var(--len) * var(--unit));
+  height: var(--unit);
+}
 
-.pip {
+.fleet-row.absent .art { opacity: 0.4; }
+
+/* Les impacts, portes en surimpression sur la longueur touchee. */
+.damage { position: absolute; inset: 0; }
+
+.damage i { position: absolute; top: 0; bottom: 0; }
+
+/* Un point d'impact de taille fixe : la silhouette reste lisible dessous. */
+.damage i::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 56%;
   width: 8px;
   height: 8px;
-  border-radius: 2px;
-  background: var(--hull-dark);
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    #ffd79a 0 26%, var(--fire) 38% 68%, rgba(226, 87, 76, 0.35) 78%, transparent);
 }
-.pip.hit { background: var(--fire); }
 
 /* --- Panneau ------------------------------------------------------------ */
 

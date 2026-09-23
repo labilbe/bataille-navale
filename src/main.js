@@ -5,20 +5,23 @@
  */
 
 import { FLEET, HORIZONTAL, PHASE, SIZE, inside } from './engine/constants.js';
-import { canPlace, cellsOf } from './engine/board.js';
+import { canPlace } from './engine/board.js';
 import { createState, pendingShip, reduce } from './engine/state.js';
 import { coordLabel, createGrid, paint } from './view/grid.js';
+import { mountDefs } from './view/silhouettes.js';
 import { createFleetPanel } from './view/fleet.js';
 
 const AI_DELAY = 550;
 
 const $ = (id) => document.getElementById(id);
 
+mountDefs(document.body);
+
 let state = createState();
 let hover = null;
 
-const playerCells = createGrid($('player-grid'), onPlayerCell);
-const enemyCells = createGrid($('enemy-grid'), onEnemyCell);
+const playerGrid = createGrid($('player-grid'), onPlayerCell);
+const enemyGrid = createGrid($('enemy-grid'), onEnemyCell);
 const updatePlayerFleet = createFleetPanel($('player-fleet'), { reveal: true });
 const updateEnemyFleet = createFleetPanel($('enemy-fleet'), { reveal: false });
 
@@ -46,25 +49,22 @@ function dispatch(action) {
   }
 }
 
-/** Les cases que survole le navire en attente, pour l'apercu du placement. */
-function previewCells() {
+/** Le navire en attente, pose sous le pointeur : l'apercu du placement. */
+function ghostShip() {
   const model = pendingShip(state);
-  if (!hover || !model || state.phase !== PHASE.PLACEMENT) return { cells: [], valid: true };
+  if (!hover || !model || state.phase !== PHASE.PLACEMENT) return null;
   const ghost = {
     ...model, row: hover.row, col: hover.col, dir: state.dir, hits: Array(model.size).fill(false),
   };
-  return { cells: cellsOf(ghost), valid: canPlace(state.player, ghost) };
+  return { ...ghost, valid: canPlace(state.player, ghost) };
 }
 
 function render() {
   const placing = state.phase === PHASE.PLACEMENT;
   const over = state.phase === PHASE.OVER;
-  const preview = previewCells();
 
-  paint(playerCells, state.player, {
-    reveal: true, preview: preview.cells, previewValid: preview.valid,
-  });
-  paint(enemyCells, state.ai, { reveal: over });
+  paint(playerGrid, state.player, { reveal: true, ghost: ghostShip() });
+  paint(enemyGrid, state.ai, { reveal: over });
   updatePlayerFleet(state.player);
   updateEnemyFleet(state.ai);
 
