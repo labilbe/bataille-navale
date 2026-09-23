@@ -91,24 +91,41 @@ const funnel = (x, rx, ry) => `<ellipse class="tower" cx="${x}" cy="50" rx="${rx
 
 const TOP = {
   'porte-avions': () => `
-    ${/* Le pont d'envol deborde de la coque : vu d'en haut, c'est une dalle. */ ''}
-    <path class="hull" d="M36 5 H420 L476 24 V76 L420 95 H36 C16 95 5 86 5 70 V30 C5 14 16 5 36 5 Z"/>
-    <path class="deck" d="M40 13 H418 L466 29 V71 L418 87 H40 C24 87 13 80 13 68 V32 C13 20 24 13 40 13 Z"/>
-    ${/* La piste oblique, plus claire, et son axe en pointilles. */ ''}
-    <path class="mark" d="M78 87 L432 34 L440 60 L88 90 Z" opacity="0.12"/>
-    <path class="mark" d="M104 82 L424 34" stroke="rgba(255,255,255,0.85)" stroke-width="5"
-      stroke-dasharray="20 18" fill="none"/>
-    ${/* La piste axiale, vers l'etrave. */ ''}
-    <path class="mark" d="M300 48 H452" stroke="rgba(255,255,255,0.8)" stroke-width="5"
-      stroke-dasharray="18 16" fill="none"/>
-    ${/* Les deux ascenseurs, en creux sur le bord du pont. */ ''}
-    <rect class="hull" x="146" y="13" width="56" height="15" rx="2"/>
-    <rect class="hull" x="330" y="72" width="56" height="15" rx="2"/>
-    ${/* L'ilot, a tribord : passerelle, cheminee et radar. */ ''}
-    <path class="tower" d="M236 62 H318 C324 62 327 66 327 71 V83 C327 88 324 91 318 91 H236 C231 91 228 87 228 82 V70 C228 65 231 62 236 62 Z"/>
-    <rect class="mast" x="248" y="70" width="18" height="14" rx="4"/>
-    <circle class="mast" cx="292" cy="77" r="8"/>
-    <path class="mark" d="M300 68 H322" stroke="rgba(255,255,255,0.5)" stroke-width="4" fill="none"/>`,
+    ${/* Le pont d'envol, vu du ciel. Ce qui fait reconnaitre un porte-avions
+          d'en haut, c'est son contour dissymetrique : la piste oblique
+          deborde a babord sur toute la partie arriere, et l'etrave est
+          franche, pas effilee. Les marquages viennent apres. */ ''}
+    <path class="hull" d="M20 19 H118 L150 3 H330 L356 13 H462
+      C477 13 487 24 487 40 V62 C487 78 477 87 462 87 H20 Z"/>
+    <path class="deck" d="M28 27 H124 L155 11 H328 L352 21 H460
+      C471 21 479 30 479 41 V61 C479 72 471 79 460 79 H28 Z"/>
+    ${/* La piste d'appontage : deux lignes de bord, un axe en pointilles,
+          trois brins d'arret en travers. */ ''}
+    <g class="mark" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="3">
+      <path d="M45 49 L317 13"/>
+      <path d="M47 71 L319 35"/>
+    </g>
+    <path class="mark" d="M46 60 L318 24" stroke="rgba(255,255,255,0.8)" stroke-width="4.5"
+      stroke-dasharray="22 20" fill="none"/>
+    <g class="mark" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.4">
+      <path d="M69 46 L71 68"/>
+      <path d="M91 43 L93 65"/>
+      <path d="M113 40 L115 62"/>
+    </g>
+    ${/* Les deux catapultes, vers l'etrave. */ ''}
+    <g class="mark" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="3">
+      <path d="M300 32 H462"/>
+      <path d="M286 62 H462"/>
+    </g>
+    ${/* Les ascenseurs de bord, en saillie de part et d'autre. */ ''}
+    <rect class="hull" x="346" y="76" width="58" height="16" rx="2"/>
+    <rect class="hull" x="368" y="1" width="54" height="15" rx="2"/>
+    ${/* L'ilot, pose a tribord : passerelle, cheminee, radar. */ ''}
+    <path class="tower" d="M228 55 H306 C312 55 314 58 314 63 V72 C314 77 311 79 306 79 H228
+      C223 79 220 76 220 71 V63 C220 58 223 55 228 55 Z"/>
+    <rect class="mast" x="238" y="61" width="15" height="12" rx="3"/>
+    <circle class="mast" cx="282" cy="67" r="6.5"/>
+    <path class="mark" d="M272 57 H302" stroke="rgba(255,255,255,0.5)" stroke-width="3" fill="none"/>`,
 
   croiseur: () => `
     <path class="hull" d="${hull(400, 31)}"/>
